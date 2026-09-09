@@ -31,6 +31,10 @@
   - `timestamp` (ISO datetime)
   - `reference_document` (string, optional)
 
+## New: PO-level partial status
+
+- `Partially Fulfilled`: PO-level status when at least one line item has fulfillment records but not all line items have reached their ordered quantities. PO becomes `Fulfilled` when all line items' fulfilled quantities equal their ordered quantities.
+
 - **Approval**
   - `id` (string)
   - `po_id` (string)

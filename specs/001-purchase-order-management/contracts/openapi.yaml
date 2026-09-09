@@ -37,6 +37,16 @@ paths:
       responses:
         '200':
           description: OK
+  /purchase-orders/{poId}/fulfillment-history:
+    get:
+      summary: Get fulfillment history for a PO
+      parameters:
+        - in: path
+          name: poId
+          required: true
+      responses:
+        '200':
+          description: OK
     post:
       summary: Submit a Draft PO
       parameters:

@@ -42,16 +42,17 @@ As a Branch Manager (approver), I want to receive approval requests for POs over
 
 ### User Story 3 - Fulfillment and cancellation (Priority: P2)
 
-As a Supplier or Buyer, I want to mark a PO as Fulfilled or Cancelled to reflect real-world completion or cancellation of orders.
+As a Supplier or Buyer, I want to record partial and complete fulfillment so the system accurately reflects delivery progress and enables reconciliation.
 
-**Why this priority**: Tracks lifecycle to completion and enables reconciliation.
+**Why this priority**: Tracks lifecycle to completion, supports partial shipments, and enables reconciliation.
 
-**Independent Test**: Transition an Approved PO to Fulfilled and confirm status history records the change; Cancel a Draft or Submitted PO and confirm supplier receives cancellation notice if previously notified.
+**Independent Test**: Record one or more fulfillment records for line items across multiple shipments; PO transitions to `Partially Fulfilled` when at least one line item has partial fulfillment and to `Fulfilled` only when all line items are fully fulfilled; cancelling a Draft or Submitted PO sends a cancellation notice if supplier was previously notified.
 
 **Acceptance Scenarios**:
 
-1. **Given** an Approved PO, **When** the supplier confirms delivery, **Then** PO transitions to Fulfilled.
-2. **Given** a Submitted PO, **When** the Buyer cancels it before approval/fulfillment, **Then** PO transitions to Cancelled and supplier receives a cancellation notification if already notified.
+1. **Given** an Approved PO, **When** the supplier reports a partial shipment (some line items or part of a line item's quantity), **Then** the system records a FulfillmentRecord for the affected line items and the PO transitions to `Partially Fulfilled`.
+2. **Given** accumulated FulfillmentRecords that cover full quantities for all line items, **When** the final fulfillment entry is recorded, **Then** the PO transitions from `Partially Fulfilled` to `Fulfilled` and the status history records the change.
+3. **Given** a Submitted PO, **When** the Buyer cancels it before approval/fulfillment, **Then** PO transitions to Cancelled and supplier receives a cancellation notification if already notified.
 
 ---
 

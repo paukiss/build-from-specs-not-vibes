@@ -69,11 +69,21 @@
 - [ ] T027 [US3] Implement service logic to transition Approved → Fulfilled only when all line items fully fulfilled (per spec decision) — path: backend/src/services/purchaseOrderService.ts
 - [ ] T028 [US3] Add integration test for partial and full fulfillment flows and cancellation notifications — path: tests/integration/purchaseOrder.fulfillment.test.ts
 
+ - [ ] T025 [P] [US3] Create FulfillmentRecord model/entity and repo — path: backend/src/models/fulfillmentRecord.ts
+ - [ ] T026 [US3] Implement fulfillment recording API: POST /purchase-orders/{poId}/fulfill (per-line-item) — path: backend/src/api/purchaseOrders.ts
+ - [ ] T027 [US3] Implement service logic to transition Approved → Partially Fulfilled → Fulfilled based on accumulated FulfillmentRecords — path: backend/src/services/purchaseOrderService.ts
+ - [ ] T028 [US3] Add integration test for partial and full fulfillment flows and cancellation notifications — path: tests/integration/purchaseOrder.fulfillment.test.ts
+ - [ ] T029 [US3] Implement GET /purchase-orders/{poId}/fulfillment-history to return per-line-item fulfillment records — path: backend/src/api/purchaseOrders.ts
+
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T029 [P] Documentation: Update specs/001-purchase-order-management/research.md and data-model.md with any final decisions and examples — path: specs/001-purchase-order-management/research.md
 - [ ] T030 [P] Add API OpenAPI documentation generation step wired to runtime (ensure specs/001-purchase-order-management/contracts/openapi.yaml is authoritative) — path: backend/src/openapi/generate.ts
 - [ ] T031 [P] Add CI integration to run contract tests, integration smoke, and quickstart validation — path: .github/workflows/po-feature.yml
+
+ - [ ] T030 [P] Documentation: Update specs/001-purchase-order-management/research.md and data-model.md with partial fulfillment decisions — path: specs/001-purchase-order-management/research.md
+ - [ ] T031 [P] Add API OpenAPI documentation generation step wired to runtime (ensure specs/001-purchase-order-management/contracts/openapi.yaml is authoritative) — path: backend/src/openapi/generate.ts
+ - [ ] T032 [P] Add CI integration to run contract tests, integration smoke, and quickstart validation — path: .github/workflows/po-feature.yml
 
 ---
 

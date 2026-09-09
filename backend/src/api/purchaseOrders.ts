@@ -23,4 +23,14 @@ router.post('/:poId/submit', async (req, res) => {
   }
 });
 
+router.get('/:poId/fulfillment-history', async (req, res) => {
+  try {
+    const { poId } = req.params;
+    // TODO: query fulfillment records by PO via joins on line_items
+    res.status(200).json({ poId, fulfillment_history: [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
