@@ -1,75 +1,383 @@
 openapi: 3.0.3
 info:
-  title: Purchase Order API
+  title: Purchase Order Management API
+  description: REST API for managing purchase orders, approvals, and fulfillment
   version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Production API
+
 paths:
   /purchase-orders:
     post:
-      summary: Create a Purchase Order
+      summary: Create a new Purchase Order
+      operationId: createPurchaseOrder
+      tags:
+        - Purchase Orders
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseOrderCreate'
+              $ref: '#/components/schemas/CreatePurchaseOrderRequest'
       responses:
         '201':
-          description: Created
+          description: Purchase Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Idempotency conflict (duplicate Idempotency-Key)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     get:
       summary: Query Purchase Orders
+      operationId: listPurchaseOrders
+      tags:
+        - Purchase Orders
       parameters:
-        - in: query
-          name: branch_id
-        - in: query
-          name: supplier_id
-        - in: query
-          name: status
+        - name: branch_id
+          in: query
+          schema:
+            type: string
+        - name: supplier_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, approved, rejected, fulfilled, partially_fulfilled, cancelled]
+        - name: created_from
+          in: query
+          description: ISO 8601 date
+          schema:
+            type: string
+            format: date-time
+        - name: created_to
+          in: query
+          description: ISO 8601 date
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
       responses:
         '200':
-          description: OK
-  /purchase-orders/{poId}:
+          description: List of Purchase Orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PurchaseOrderResponse'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+  /purchase-orders/{po_id}:
     get:
-      summary: Get PO by ID
+      summary: Get a Purchase Order by ID
+      operationId: getPurchaseOrder
+      tags:
+        - Purchase Orders
       parameters:
-        - in: path
-          name: poId
+        - name: po_id
+          in: path
           required: true
+          schema:
+            type: string
       responses:
         '200':
-          description: OK
-  /purchase-orders/{poId}/fulfillment-history:
-    get:
-      summary: Get fulfillment history for a PO
+          description: Purchase Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update a Draft Purchase Order
+      operationId: updatePurchaseOrder
+      tags:
+        - Purchase Orders
       parameters:
-        - in: path
-          name: poId
+        - name: po_id
+          in: path
           required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePurchaseOrderRequest'
       responses:
         '200':
-          description: OK
+          description: Purchase Order updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Cannot update non-Draft PO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/submit:
     post:
-      summary: Submit a Draft PO
+      summary: Submit a Draft Purchase Order
+      operationId: submitPurchaseOrder
+      tags:
+        - Purchase Orders
       parameters:
-        - in: path
-          name: poId
+        - name: po_id
+          in: path
           required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotency_key:
+                  type: string
+                  description: UUID for idempotency
       responses:
         '200':
-          description: Submitted
-  /purchase-orders/{poId}/approve:
+          description: Purchase Order submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Duplicate submission (idempotency)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/approve:
     post:
-      summary: Approve a Submitted PO
+      summary: Approve a Submitted Purchase Order (approver only)
+      operationId: approvePurchaseOrder
+      tags:
+        - Approvals
       parameters:
-        - in: path
-          name: poId
+        - name: po_id
+          in: path
           required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Optional approver comment
       responses:
         '200':
-          description: Approved
+          description: Purchase Order approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Unauthorized (must be approver)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: PO not pending approval or already approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/reject:
+    post:
+      summary: Reject a Submitted Purchase Order (approver only)
+      operationId: rejectPurchaseOrder
+      tags:
+        - Approvals
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Rejection reason
+                  required: true
+      responses:
+        '200':
+          description: Purchase Order rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/cancel:
+    post:
+      summary: Cancel a Purchase Order
+      operationId: cancelPurchaseOrder
+      tags:
+        - Purchase Orders
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Cancellation reason
+      responses:
+        '200':
+          description: Purchase Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/line-items:
+    post:
+      summary: Add a line item to a Draft PO
+      operationId: addLineItem
+      tags:
+        - Line Items
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLineItemRequest'
+      responses:
+        '201':
+          description: Line item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineItemResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /purchase-orders/{po_id}/fulfill:
+    post:
+      summary: Record fulfillment for line items
+      operationId: recordFulfillment
+      tags:
+        - Fulfillment
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordFulfillmentRequest'
+      responses:
+        '200':
+          description: Fulfillment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   schemas:
-    PurchaseOrderCreate:
+    CreatePurchaseOrderRequest:
       type: object
+      required:
+        - branch_id
+        - buyer_id
+        - supplier_id
       properties:
         branch_id:
           type: string
@@ -79,13 +387,101 @@ components:
           type: string
         currency:
           type: string
+          default: USD
+        notes:
+          type: string
+
+    UpdatePurchaseOrderRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+
+    CreateLineItemRequest:
+      type: object
+      required:
+        - product_name
+        - quantity
+        - expected_price
+      properties:
+        product_id:
+          type: string
+          description: Optional reference to catalog product
+        product_name:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        expected_price:
+          type: number
+          format: decimal
+          minimum: 0
+
+    RecordFulfillmentRequest:
+      type: object
+      required:
+        - line_item_id
+        - quantity_fulfilled
+      properties:
+        line_item_id:
+          type: string
+        quantity_fulfilled:
+          type: number
+          format: decimal
+          minimum: 0
+        reference_document:
+          type: string
+          description: Shipment tracking, invoice, etc.
+        notes:
+          type: string
+
+    PurchaseOrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        po_number:
+          type: string
+        branch_id:
+          type: string
+        buyer_id:
+          type: string
+        supplier_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, approved, rejected, fulfilled, partially_fulfilled, cancelled]
+        total_amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
         line_items:
           type: array
           items:
-            $ref: '#/components/schemas/LineItemCreate'
-    LineItemCreate:
+            $ref: '#/components/schemas/LineItemResponse'
+        approval:
+          $ref: '#/components/schemas/ApprovalResponse'
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryResponse'
+
+    LineItemResponse:
       type: object
       properties:
+        id:
+          type: string
+        po_id:
+          type: string
         product_id:
           type: string
         product_name:
@@ -94,3 +490,99 @@ components:
           type: integer
         expected_price:
           type: number
+          format: decimal
+        line_total:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+        fulfillment_records:
+          type: array
+          items:
+            $ref: '#/components/schemas/FulfillmentRecordResponse'
+
+    FulfillmentRecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        line_item_id:
+          type: string
+        quantity_fulfilled:
+          type: number
+          format: decimal
+        timestamp:
+          type: string
+          format: date-time
+        reference_document:
+          type: string
+        notes:
+          type: string
+
+    ApprovalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        po_id:
+          type: string
+        approver_id:
+          type: string
+        decision:
+          type: string
+          enum: [pending, approved, rejected]
+        timestamp:
+          type: string
+          format: date-time
+        comment:
+          type: string
+
+    StatusHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        from_status:
+          type: string
+        to_status:
+          type: string
+        changed_by:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
