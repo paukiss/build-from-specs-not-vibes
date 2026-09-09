@@ -1,35 +1,58 @@
-import express from 'express';
-import { createDraft, submitPO } from '../services/purchaseOrderService';
+import { Router, Request, Response, NextFunction } from 'express';
+import { PurchaseOrderService } from '../services/purchaseOrderService';
 
-const router = express.Router();
+const router = Router();
+const poService = new PurchaseOrderService();
 
-router.post('/', async (req, res) => {
+// Create Draft PO
+router.post('/purchase-orders', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const po = req.body;
-    const created = await createDraft(po);
-    res.status(201).json(created);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const { branch_id, buyer_id, supplier_id, currency, notes } = req.body;
+    if (!branch_id || !buyer_id || !supplier_id) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const po = await poService.createPO(branch_id, buyer_id, supplier_id, currency, notes);
+    res.status(201).json(po);
+  } catch (err) {
+    next(err);
   }
 });
 
-router.post('/:poId/submit', async (req, res) => {
+// Get PO
+router.get('/purchase-orders/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { poId } = req.params;
-    await submitPO(poId);
-    res.status(200).json({ ok: true });
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    const po = await poService.getPO(req.params.id);
+    res.json(po);
+  } catch (err) {
+    next(err);
   }
 });
 
-router.get('/:poId/fulfillment-history', async (req, res) => {
+// Add Line Item
+router.post('/purchase-orders/:id/line-items', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { poId } = req.params;
-    // TODO: query fulfillment records by PO via joins on line_items
-    res.status(200).json({ poId, fulfillment_history: [] });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const { product_name, quantity, expected_price, product_id } = req.body;
+    if (!product_name || !quantity || expected_price === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const lineItem = await poService.addLineItem(req.params.id, product_name, quantity, expected_price, product_id);
+    res.status(201).json(lineItem);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Submit PO
+router.post('/purchase-orders/:id/submit', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { idempotency_key } = req.body;
+    if (!idempotency_key) {
+      return res.status(400).json({ error: 'idempotency_key required' });
+    }
+    const po = await poService.submitPO(req.params.id, idempotency_key);
+    res.json(po);
+  } catch (err) {
+    next(err);
   }
 });
 

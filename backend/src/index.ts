@@ -1,12 +1,12 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
-import { Database } from 'sqlite3';
+import express, { Express } from 'express';
 import { configureDatabase, runMigrations } from './db/sqlite';
 import { errorHandler } from './middleware/errorHandler';
 import { setupNotificationWorker } from './workers/notificationRetry';
 import purchaseOrderRoutes from './api/purchaseOrders';
+import { logger } from './utils/logger';
+import { config } from './config/index';
 
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -14,27 +14,34 @@ app.use(express.json());
 // Routes
 app.use('/api/v1', purchaseOrderRoutes);
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Error handling
 app.use(errorHandler);
 
 // Initialize application
 async function initializeApp() {
   try {
+    logger.info('Initializing Purchase Order Management API...');
+    
     // Setup database
     await configureDatabase();
     await runMigrations();
-    console.log('Database initialized');
+    logger.info('Database initialized successfully');
 
     // Start notification worker
     setupNotificationWorker();
-    console.log('Notification worker started');
+    logger.info('Notification worker started');
 
     // Start server
-    app.listen(PORT, () => {
-      console.log(`Purchase Order API listening on port ${PORT}`);
+    app.listen(config.port, () => {
+      logger.info(`API listening on port ${config.port}`);
     });
   } catch (error) {
-    console.error('Failed to initialize application:', error);
+    logger.error('Failed to initialize application', error);
     process.exit(1);
   }
 }
