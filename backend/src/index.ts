@@ -1,14 +1,44 @@
-import express from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
+import { Database } from 'sqlite3';
+import { configureDatabase, runMigrations } from './db/sqlite';
+import { errorHandler } from './middleware/errorHandler';
+import { setupNotificationWorker } from './workers/notificationRetry';
+import purchaseOrderRoutes from './api/purchaseOrders';
 
-const app = express();
+const app: Express = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(express.json());
 
-app.get('/', (_req, res) => res.send({ status: 'ok' }));
+// Routes
+app.use('/api/v1', purchaseOrderRoutes);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`backend listening on ${port}`);
-});
+// Error handling
+app.use(errorHandler);
+
+// Initialize application
+async function initializeApp() {
+  try {
+    // Setup database
+    await configureDatabase();
+    await runMigrations();
+    console.log('Database initialized');
+
+    // Start notification worker
+    setupNotificationWorker();
+    console.log('Notification worker started');
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Purchase Order API listening on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize application:', error);
+    process.exit(1);
+  }
+}
+
+initializeApp();
 
 export default app;
