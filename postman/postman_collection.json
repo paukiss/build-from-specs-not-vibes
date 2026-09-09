@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "Purchase Order Management API",
+    "description": "Test collection for PO API - Create, Submit, Track purchase orders",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Story 1 - Create & Submit PO",
+      "item": [
+        {
+          "name": "Create Draft PO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch_id\": \"{{branch_id}}\",\n  \"buyer_id\": \"{{buyer_id}}\",\n  \"supplier_id\": \"{{supplier_id}}\",\n  \"currency\": \"USD\",\n  \"notes\": \"Test purchase order\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/purchase-orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "purchase-orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Line Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_name\": \"Office Chair\",\n  \"quantity\": 5,\n  \"expected_price\": 299.99\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/purchase-orders/{{po_id}}/line-items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "purchase-orders", "{{po_id}}", "line-items"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get PO",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/purchase-orders/{{po_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "purchase-orders", "{{po_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit PO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/purchase-orders/{{po_id}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "purchase-orders", "{{po_id}}", "submit"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "branch_id",
+      "value": "branch-001",
+      "type": "string"
+    },
+    {
+      "key": "buyer_id",
+      "value": "buyer-001",
+      "type": "string"
+    },
+    {
+      "key": "supplier_id",
+      "value": "supplier-001",
+      "type": "string"
+    },
+    {
+      "key": "po_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
