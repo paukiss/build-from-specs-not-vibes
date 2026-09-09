@@ -10,6 +10,12 @@
 - [ ] T004 [P] Configure linting and formatting (ESLint, Prettier) — path: backend/.eslintrc.cjs, backend/.prettierrc
 - [ ] T005 [P] Add test harness and CI scaffold for running Vitest and Playwright (config files) — path: backend/vitest.config.ts, backend/playwright.config.ts
 
+ - [X] T001 Create project structure per implementation plan (backend/, frontend/, tests/) — path: backend/, frontend/, tests/
+ - [X] T002 Initialize Node + TypeScript project for backend (create backend/package.json, backend/tsconfig.json)
+ - [X] T003 [P] Install core dependencies and devDependencies (express, sqlite3, typeorm/knex or chosen ORM, nodemailer (stub), vitest, playwright) — path: backend/package.json
+ - [ ] T004 [P] Configure linting and formatting (ESLint, Prettier) — path: backend/.eslintrc.cjs, backend/.prettierrc
+ - [ ] T005 [P] Add test harness and CI scaffold for running Vitest and Playwright (config files) — path: backend/vitest.config.ts, backend/playwright.config.ts
+
 ## Phase 2: Foundational (Blocking Prerequisites)
 
 - [ ] T006 Setup SQLite DB helper and connection pool — path: backend/src/db/sqlite.ts
@@ -17,6 +23,12 @@
 - [ ] T008 Create repository layer interfaces for PurchaseOrder and LineItem — path: backend/src/repos/purchaseOrderRepo.ts
 - [ ] T009 Implement a nodemailer stub and notification interface (configurable) — path: backend/src/notifications/nodemailerStub.ts
 - [ ] T010 Configure OpenAPI generation pipeline and place contract at specs/001-purchase-order-management/contracts/openapi.yaml
+
+ - [X] T006 Setup SQLite DB helper and connection pool — path: backend/src/db/sqlite.ts
+ - [X] T007 Create initial DB schema and migrations for PO entities — path: backend/src/db/migrations/001_init.sql
+ - [X] T008 Create repository layer interfaces for PurchaseOrder and LineItem — path: backend/src/repos/purchaseOrderRepo.ts
+ - [X] T009 Implement a nodemailer stub and notification interface (configurable) — path: backend/src/notifications/nodemailerStub.ts
+ - [X] T010 Configure OpenAPI generation pipeline and place contract at specs/001-purchase-order-management/contracts/openapi.yaml
 
 ## Phase 3: User Story 1 - Create and submit a Purchase Order (Priority: P1)
 
